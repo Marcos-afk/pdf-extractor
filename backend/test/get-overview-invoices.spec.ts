@@ -1,34 +1,44 @@
-import { InvoiceEntity } from '@application/invoices/entities/invoice.entity';
+import { InvoiceEntity, InvoiceEntityInput } from '@application/invoices/entities/invoice.entity';
 import { InMemoryInvoicesRepository } from '@application/invoices/in-memory/in-memory-invoices.repository';
 import { GetOverviewInvoicesUseCase } from '@application/invoices/use-cases/get-overview-invoices/get-overview-invoices.use-case';
 
-const makeInvoice = (partial: Partial<InvoiceEntity> = {}): InvoiceEntity =>
-	new InvoiceEntity({
-		customerNumber: '3001422762',
-		referenceMonth: 'JAN/2024',
-		electricalEnergyQuantity: 100,
-		electricalEnergyValue: 50,
-		sceeeEnergyWithoutICMSQuantity: 200,
-		sceeeEnergyWithoutICMSValue: 80,
-		gdiCompensatedEnergyQuantity: 150,
-		gdiCompensatedEnergyValue: -60,
-		contribMunicipalPublicLightValue: 15,
-		electricalEnergyConsumptionValue: 300,
-		totalValueWithoutGD: 145,
-		gdEconomy: 60,
-		createdAt: new Date(),
-		updatedAt: new Date(),
-		...partial,
-	});
+const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
 describe('GetOverviewInvoicesUseCase', () => {
 	let repository: InMemoryInvoicesRepository;
 	let useCase: GetOverviewInvoicesUseCase;
+	let invoiceCounter: number;
 
 	beforeEach(() => {
 		repository = new InMemoryInvoicesRepository();
 		useCase = new GetOverviewInvoicesUseCase(repository);
+		invoiceCounter = 0;
 	});
+
+	const makeInvoice = (partial: Partial<InvoiceEntityInput> = {}) => {
+		const month = MONTHS[invoiceCounter % 12];
+		const year = 2024 + Math.floor(invoiceCounter / 12);
+
+		invoiceCounter++;
+
+		return new InvoiceEntity({
+			customerNumber: '3001422762',
+			referenceMonth: `${month}/${year}`,
+			electricalEnergyQuantity: 100,
+			electricalEnergyValue: 50,
+			sceeeEnergyWithoutICMSQuantity: 200,
+			sceeeEnergyWithoutICMSValue: 80,
+			gdiCompensatedEnergyQuantity: 150,
+			gdiCompensatedEnergyValue: -60,
+			contribMunicipalPublicLightValue: 15,
+			electricalEnergyConsumptionValue: 300,
+			totalValueWithoutGD: 145,
+			gdEconomy: 60,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+			...partial,
+		});
+	};
 
 	describe('without filters', () => {
 		it('should return zeros when the repository is empty', async () => {

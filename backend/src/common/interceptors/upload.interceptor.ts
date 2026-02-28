@@ -12,7 +12,7 @@ import { Request, Response } from 'express';
 import multer, { memoryStorage, StorageEngine } from 'multer';
 import { Observable } from 'rxjs';
 
-export interface UploadOptions {
+export interface UploadOptionsProps {
 	fieldName?: string;
 	maxCount?: number;
 	maxSizeInMb?: number;
@@ -42,7 +42,7 @@ function handleMulterError({ error, maxSizeInMb, maxCount, fieldName }: HandlerM
 	}
 }
 
-export function UploadInterceptor(options: UploadOptions = {}) {
+export function UploadInterceptor(options: UploadOptionsProps = {}) {
 	const {
 		fieldName = 'file',
 		maxCount = 1,

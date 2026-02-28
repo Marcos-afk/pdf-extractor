@@ -12,6 +12,18 @@ export class InMemoryInvoicesRepository implements InvoicesRepository {
 	private db: InvoiceEntity[] = [];
 
 	async create(data: InvoiceEntity): Promise<InvoiceEntity> {
+		const existingIndex = this.db.findIndex(
+			(invoice) =>
+				invoice.customerNumber === data.customerNumber &&
+				invoice.referenceMonth === data.referenceMonth,
+		);
+
+		if (existingIndex !== -1) {
+			this.db[existingIndex] = data;
+
+			return data;
+		}
+
 		this.db.push(data);
 
 		return data;

@@ -1,4 +1,8 @@
+import { GetInvoicesDTO } from '@application/invoices/dtos/get-invoices.dto';
+import { GetOverviewInvoicesDTO } from '@application/invoices/dtos/get-overview-invoices.dto';
 import { CreateInvoiceUseCase } from '@application/invoices/use-cases/create-invoice/create-invoice.use-case';
+import { GetInvoicesUseCase } from '@application/invoices/use-cases/get-invoices/get-invoices.use-case';
+import { GetOverviewInvoicesUseCase } from '@application/invoices/use-cases/get-overview-invoices/get-overview-invoices.use-case';
 import { UploadInterceptor } from '@common/interceptors/upload.interceptor';
 import {
 	Controller,
@@ -13,12 +17,11 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { GetInvoicesDTO } from '@/src/application/invoices/dtos/get-invoices.dto';
-import { GetOverviewInvoicesDTO } from '@/src/application/invoices/dtos/get-overview-invoices.dto';
-import { GetInvoicesUseCase } from '@/src/application/invoices/use-cases/get-invoices/get-invoices.use-case';
-import { GetOverviewInvoicesUseCase } from '@/src/application/invoices/use-cases/get-overview-invoices/get-overview-invoices.use-case';
-import { CreateInvoiceResponse, DashboardResponse, InvoiceResponse } from './types/response.props';
-
+import {
+	CreateInvoiceResponse,
+	DashboardResponse,
+	GetInvoicesResponse,
+} from './types/response.props';
 @ApiTags('Invoices')
 @Controller('invoices')
 export class InvoicesController {
@@ -56,18 +59,18 @@ export class InvoicesController {
 	})
 	@ApiResponse({
 		description: 'OK',
-		type: InvoiceResponse,
-		isArray: true,
+		type: GetInvoicesResponse,
 		status: HttpStatus.OK,
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get('/')
 	async get(@Query() data: GetInvoicesDTO, @Res() res: Response) {
-		const invoices = await this.getInvoicesUseCase.execute(data);
+		const { invoices, nextCursor } = await this.getInvoicesUseCase.execute(data);
 
 		return res.status(HttpStatus.OK).json({
 			message: 'Lista de faturas!',
 			data: invoices,
+			nextCursor,
 		});
 	}
 
@@ -100,10 +103,11 @@ export class InvoicesController {
 	@HttpCode(HttpStatus.CREATED)
 	@Post('/')
 	async createInvoice(@UploadedFile() file: Express.Multer.File, @Res() res: Response) {
-		await this.createInvoiceUseCase.execute({ file });
+		const invoice = await this.createInvoiceUseCase.execute({ file });
 
 		return res.status(HttpStatus.CREATED).json({
-			message: 'Evento criado com sucesso!',
+			message: 'Fatura processada com sucesso!',
+			data: invoice,
 		});
 	}
 }

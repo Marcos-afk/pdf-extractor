@@ -30,10 +30,10 @@ jest.mock('pdf-parse', () => ({
 	},
 }));
 
+import { GetInvoicesDTO } from '@application/invoices/dtos/get-invoices.dto';
 import { InMemoryInvoicesRepository } from '@application/invoices/in-memory/in-memory-invoices.repository';
 import { CreateInvoiceUseCase } from '@application/invoices/use-cases/create-invoice/create-invoice.use-case';
 import { FakePDFDataExtractorProvider } from '@infra/providers/pdf-data-extractor/fake-pdf-data-extractor.provider';
-import { GetInvoicesDTO } from '@/src/application/invoices/dtos/get-invoices.dto';
 
 const makePDFFile = (filename: string) => {
 	const buffer = readFileSync(join(__dirname, 'pdf', filename));
@@ -69,10 +69,12 @@ describe('CreateInvoiceUseCase', () => {
 
 	describe('derived fields calculation logic', () => {
 		let useCase: CreateInvoiceUseCase;
+		let mockProvider: ReturnType<typeof makeMockProvider>;
 		const file = {} as Express.Multer.File;
 
 		beforeEach(() => {
-			useCase = new CreateInvoiceUseCase(repository, makeMockProvider());
+			mockProvider = makeMockProvider();
+			useCase = new CreateInvoiceUseCase(repository, mockProvider);
 		});
 
 		it('should calculate electricalEnergyConsumptionValue as the sum of quantities', async () => {
@@ -130,6 +132,25 @@ describe('CreateInvoiceUseCase', () => {
 			expect(result.gdiCompensatedEnergyQuantity).toBe(300);
 			expect(result.gdiCompensatedEnergyValue).toBe(-120.5);
 			expect(result.contribMunicipalPublicLightValue).toBe(15);
+		});
+
+		it('should call the pdf provider with the given file', async () => {
+			await useCase.execute({ file });
+
+			expect(mockProvider.get).toHaveBeenCalledTimes(1);
+			expect(mockProvider.get).toHaveBeenCalledWith({ pdf: file });
+		});
+
+		it('should update an existing invoice instead of creating a duplicate when the same customer and month are reprocessed', async () => {
+			await useCase.execute({ file });
+
+			const updatedProvider = makeMockProvider({ electricalEnergyValue: 999 });
+			const useCaseWithUpdate = new CreateInvoiceUseCase(repository, updatedProvider);
+			await useCaseWithUpdate.execute({ file });
+
+			const invoices = await repository.get({} as GetInvoicesDTO);
+			expect(invoices).toHaveLength(1);
+			expect(invoices[0].electricalEnergyValue).toBe(999);
 		});
 	});
 

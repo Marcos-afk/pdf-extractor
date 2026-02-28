@@ -110,6 +110,13 @@ export class InvoiceResponse {
 
 export class GetInvoicesResponse {
 	@ApiProperty({
+		description: 'Mensagem de resposta',
+		example: 'Lista de faturas!',
+		type: String,
+	})
+	readonly message: string;
+
+	@ApiProperty({
 		description: 'Lista de faturas',
 		type: [InvoiceResponse],
 		isArray: true,
@@ -117,11 +124,12 @@ export class GetInvoicesResponse {
 	readonly data: InvoiceResponse[];
 
 	@ApiProperty({
-		description: 'Mensagem de resposta',
-		example: 'Lista de faturas!',
+		description: 'Cursor para a próxima página. Null quando não há mais páginas.',
+		example: randomUUID(),
 		type: String,
+		nullable: true,
 	})
-	readonly message: string;
+	readonly nextCursor?: string;
 }
 
 export class CreateInvoiceResponse {
@@ -131,6 +139,12 @@ export class CreateInvoiceResponse {
 		type: String,
 	})
 	readonly message: string;
+
+	@ApiProperty({
+		description: 'Dados da fatura processada',
+		type: InvoiceResponse,
+	})
+	readonly data: InvoiceResponse;
 }
 
 class OverviewEnergyResponse {

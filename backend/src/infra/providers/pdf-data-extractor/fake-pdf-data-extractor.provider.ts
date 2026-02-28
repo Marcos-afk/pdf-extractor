@@ -38,7 +38,10 @@ export class FakePDFDataExtractorProvider implements PDFDataExtractorProvider {
 			}
 
 			return result.text;
-		} catch {
+		} catch (error) {
+			if (error instanceof BadRequestError) {
+				throw error;
+			}
 			throw new BadRequestError(
 				'Não foi possível ler o PDF. O arquivo pode estar corrompido ou protegido.',
 			);
