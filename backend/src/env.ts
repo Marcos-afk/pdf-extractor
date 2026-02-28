@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import { logsAdapter } from '@common/adapters/api-logs/api-logs.adapter';
 import { z } from 'zod';
 
@@ -10,6 +12,8 @@ const envSchema = z
 			})
 			.default('development'),
 		WHITELIST_REQUESTS: z.string().optional(),
+		ANTHROPIC_KEY: z.string().min(1, { error: 'ANTHROPIC_KEY é requerida' }),
+		DATABASE_URL: z.string().min(1, { error: 'DATABASE_URL é requerido' }),
 	})
 	.superRefine((data, ctx) => {
 		if (data.NODE_ENV === 'production' && !data.WHITELIST_REQUESTS) {
