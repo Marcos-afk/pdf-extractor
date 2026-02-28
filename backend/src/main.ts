@@ -7,7 +7,7 @@ import { PreconditionFailedInterceptor } from '@common/interceptors/precondition
 import { UnauthorizedRequestInterceptor } from '@common/interceptors/unauthorized-request.interceptor';
 import { ForbiddenException, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import type { NestExpressApplication } from '@nestjs/platform-express';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { env } from './env';
