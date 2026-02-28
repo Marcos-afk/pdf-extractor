@@ -26,7 +26,7 @@ export class PrismaInvoicesRepository implements InvoicesRepository {
 		contribMunicipalPublicLightValue,
 		electricalEnergyConsumptionValue,
 		totalValueWithoutGD,
-		gdeConomy,
+		gdEconomy,
 		createdAt,
 		updatedAt,
 	}: InvoiceEntity) {
@@ -43,7 +43,7 @@ export class PrismaInvoicesRepository implements InvoicesRepository {
 			contrib_municipal_public_light_value: contribMunicipalPublicLightValue,
 			electrical_energy_consumption_value: electricalEnergyConsumptionValue,
 			total_value_without_gd: totalValueWithoutGD,
-			gd_economy: gdeConomy,
+			gd_economy: gdEconomy,
 			created_at: createdAt,
 			updated_at: updatedAt,
 		};
@@ -79,7 +79,7 @@ export class PrismaInvoicesRepository implements InvoicesRepository {
 			contribMunicipalPublicLightValue: contrib_municipal_public_light_value,
 			electricalEnergyConsumptionValue: electrical_energy_consumption_value,
 			totalValueWithoutGD: total_value_without_gd,
-			gdeConomy: gd_economy,
+			gdEconomy: gd_economy,
 			createdAt: created_at,
 			updatedAt: updated_at,
 		});

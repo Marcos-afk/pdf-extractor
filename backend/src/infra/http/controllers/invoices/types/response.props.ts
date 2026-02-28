@@ -91,7 +91,7 @@ export class InvoiceResponse {
 		example: 217.16,
 		type: Number,
 	})
-	readonly gdeConomy: number;
+	readonly gdEconomy: number;
 
 	@ApiProperty({
 		description: 'Data de criação',

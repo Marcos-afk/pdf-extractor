@@ -33,7 +33,7 @@ export class CreateInvoiceUseCase {
 		const totalValueWithoutGD =
 			electricalEnergyValue + sceeeEnergyWithoutICMSValue + contribMunicipalPublicLightValue;
 
-		const gdeConomy = Math.abs(gdiCompensatedEnergyValue);
+		const gdEconomy = Math.abs(gdiCompensatedEnergyValue);
 
 		const invoice = new InvoiceEntity({
 			customerNumber,
@@ -47,7 +47,7 @@ export class CreateInvoiceUseCase {
 			contribMunicipalPublicLightValue,
 			electricalEnergyConsumptionValue,
 			totalValueWithoutGD,
-			gdeConomy,
+			gdEconomy,
 		});
 
 		return await this.invoicesRepository.create(invoice);

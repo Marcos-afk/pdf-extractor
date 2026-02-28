@@ -11,7 +11,7 @@ export class InvoiceEntity {
 	contribMunicipalPublicLightValue: number;
 	electricalEnergyConsumptionValue: number;
 	totalValueWithoutGD: number;
-	gdeConomy: number;
+	gdEconomy: number;
 	createdAt: Date;
 	updatedAt: Date;
 

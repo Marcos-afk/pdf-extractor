@@ -72,7 +72,7 @@ export class InMemoryInvoicesRepository implements InvoicesRepository {
 
 		const totalWithoutGD = invoices.reduce((acc, invoice) => acc + invoice.totalValueWithoutGD, 0);
 
-		const gdEconomy = invoices.reduce((acc, invoice) => acc + invoice.gdeConomy, 0);
+		const gdEconomy = invoices.reduce((acc, invoice) => acc + invoice.gdEconomy, 0);
 
 		return {
 			energy: { consumption, compensated },

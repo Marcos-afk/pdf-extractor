@@ -12,7 +12,7 @@ export class GetInvoicesDTO {
 	})
 	@IsOptional()
 	@IsString({ message: 'Número do cliente deve ser uma string' })
-	readonly customerNumber: string;
+	readonly customerNumber?: string;
 
 	@ApiProperty({
 		description: 'Mês de referência',
@@ -22,7 +22,7 @@ export class GetInvoicesDTO {
 	})
 	@IsOptional()
 	@IsString({ message: 'Mês de referência deve ser uma string' })
-	readonly referenceMonth: string;
+	readonly referenceMonth?: string;
 
 	@ApiProperty({
 		description: 'O cursor para a paginação',
