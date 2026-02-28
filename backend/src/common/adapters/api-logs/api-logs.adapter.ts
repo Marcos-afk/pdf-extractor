@@ -1,5 +1,5 @@
 import pino from 'pino';
-import type { LogsAdapterProps } from './types/logs.adapter-props';
+import { LogsAdapterProps } from './types/logs.adapter-props';
 
 class LogsAdapter implements LogsAdapterProps {
 	private log: pino.Logger;
