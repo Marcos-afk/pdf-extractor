@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CreateInvoiceUseCase } from '@application/invoices/use-cases/create-invoice/create-invoice.use-case';
+import { BadRequestError } from '@common/types/bad-request-error';
 import { GetInvoicesUseCase } from '@application/invoices/use-cases/get-invoices/get-invoices.use-case';
 import { GetOverviewInvoicesUseCase } from '@application/invoices/use-cases/get-overview-invoices/get-overview-invoices.use-case';
 import { BadRequestInterceptor } from '@common/interceptors/bad-request.interceptor';
@@ -286,6 +287,60 @@ describe('InvoicesController (HTTP)', () => {
 				});
 
 			expect(res.status).toBe(415);
+		});
+
+		it('should return 400 when the LLM provider fails', async () => {
+			({ app } = await buildApp({
+				createInvoice: {
+					execute: jest
+						.fn()
+						.mockRejectedValue(
+							new BadRequestError('O serviço de extração está temporariamente indisponível.'),
+						),
+				},
+			}));
+
+			const pdfBuffer = readFileSync(join(__dirname, 'pdf', '3001422762-01-2024.pdf'));
+
+			const res = await supertest(app.getHttpServer())
+				.post('/invoices')
+				.attach('file', pdfBuffer, {
+					filename: '3001422762-01-2024.pdf',
+					contentType: 'application/pdf',
+				});
+
+			expect(res.status).toBe(400);
+			expect(res.body.message).toBe(
+				'O serviço de extração está temporariamente indisponível.',
+			);
+		});
+
+		it('should return 400 when the uploaded PDF is not a valid invoice', async () => {
+			({ app } = await buildApp({
+				createInvoice: {
+					execute: jest
+						.fn()
+						.mockRejectedValue(
+							new BadRequestError(
+								'O PDF enviado não parece ser uma fatura de energia elétrica válida.',
+							),
+						),
+				},
+			}));
+
+			const pdfBuffer = readFileSync(join(__dirname, 'pdf', '3001422762-01-2024.pdf'));
+
+			const res = await supertest(app.getHttpServer())
+				.post('/invoices')
+				.attach('file', pdfBuffer, {
+					filename: '3001422762-01-2024.pdf',
+					contentType: 'application/pdf',
+				});
+
+			expect(res.status).toBe(400);
+			expect(res.body.message).toBe(
+				'O PDF enviado não parece ser uma fatura de energia elétrica válida.',
+			);
 		});
 	});
 });

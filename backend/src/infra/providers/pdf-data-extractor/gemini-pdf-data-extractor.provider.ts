@@ -1,7 +1,6 @@
 import { BadRequestError } from '@common/types/bad-request-error';
 import { ApiError, GoogleGenAI, Type } from '@google/genai';
 import { Injectable } from '@nestjs/common';
-import { PDFParse } from 'pdf-parse';
 import { env } from 'src/env';
 import { z } from 'zod';
 import {
@@ -9,19 +8,6 @@ import {
 	PDFDataProps,
 	PDFDataResponseProps,
 } from './types/pdf-data-extractor.provider';
-
-const PDF_INVOICE_KEYWORDS = [
-	'energia elétrica',
-	'energia eletrica',
-	'kwh',
-	'fatura',
-	'consumo',
-	'distribuidora',
-	'iluminação pública',
-	'iluminacao publica',
-	'scee',
-	'gd i',
-];
 
 const pdfDataSchema = z.object({
 	customerNumber: z.string(),
@@ -61,44 +47,30 @@ const responseSchema = {
 	],
 };
 
+const PROMPT = `PASSO 1 — VALIDAÇÃO (obrigatório antes de qualquer extração):
+Verifique se este documento é uma fatura de energia elétrica. Uma fatura válida deve conter TODOS estes elementos:
+- Número do cliente (campo "Nº DO CLIENTE" ou equivalente)
+- Mês de referência da fatura
+- Itens de cobrança com unidade kWh (Energia Elétrica, SCEE s/ ICMS, Energia Compensada GD I, etc.)
+- Contribuição de Iluminação Pública Municipal
+
+Se o documento for qualquer outra coisa (currículo, contrato, manual, nota fiscal de produto, descrição de vaga, etc.), você DEVE retornar customerNumber como "INVALID" e todos os campos numéricos como 0. NÃO tente inventar ou inferir dados de documentos que não sejam faturas de energia elétrica.
+
+PASSO 2 — EXTRAÇÃO (somente se for uma fatura válida):
+Extraia os campos abaixo. Para campos não encontrados, use 0.
+- customerNumber: número do cliente (string)
+- referenceMonth: mês de referência no formato MES/ANO, ex: JAN/2024
+- ElectricalEnergyQuantity: quantidade de Energia Elétrica em kWh
+- ElectricalEnergyValue: valor em R$ da Energia Elétrica (positivo)
+- SCEEEEnergyWithoutICMSQuantity: quantidade de Energia SCEE s/ ICMS em kWh
+- SCEEEEnergyWithoutICMSValue: valor em R$ da Energia SCEE s/ ICMS
+- GDICompensatedEnergyQuantity: quantidade de Energia Compensada GD I em kWh
+- GDICompensatedEnergyValue: valor em R$ da Energia Compensada GD I
+- ContribMunicipalPublicLightValue: valor em R$ da Contrib Ilum Pública Municipal`;
+
 @Injectable()
 export class GeminiPDFDataExtractorProvider implements PDFDataExtractorProvider {
 	private client = new GoogleGenAI({ apiKey: env.GEMINI_KEY });
-
-	private async convertPdfToString(pdf: Express.Multer.File) {
-		if (!pdf?.buffer) {
-			throw new BadRequestError('Arquivo PDF inválido.');
-		}
-
-		try {
-			const parser = new PDFParse({ data: pdf.buffer });
-			const result = await parser.getText();
-
-			if (!result.text || result.text.trim().length === 0) {
-				throw new BadRequestError(
-					'O PDF enviado não contém texto legível. Verifique se o arquivo não está digitalizado como imagem.',
-				);
-			}
-
-			return result.text;
-		} catch {
-			throw new BadRequestError(
-				'Não foi possível ler o PDF. O arquivo pode estar corrompido ou protegido.',
-			);
-		}
-	}
-
-	private validateIfInvoice(text: string) {
-		const textLower = text.toLowerCase();
-
-		const matchedKeywords = PDF_INVOICE_KEYWORDS.filter((keyword) => textLower.includes(keyword));
-
-		if (matchedKeywords.length < 2) {
-			throw new BadRequestError(
-				'O PDF enviado não parece ser uma fatura de energia elétrica válida.',
-			);
-		}
-	}
 
 	private handleApiError(error: unknown): never {
 		if (error instanceof ApiError) {
@@ -122,39 +94,29 @@ export class GeminiPDFDataExtractorProvider implements PDFDataExtractorProvider 
 		throw error;
 	}
 
-	private buildPrompt(pdfInText: string) {
-		return `
-Extraia os dados da seguinte fatura de energia elétrica e retorne no formato JSON especificado.
-
-TEXTO DA FATURA:
-${pdfInText}
-
-Campos a extrair:
-- customerNumber: número do cliente (string)
-- referenceMonth: mês de referência no formato MES/ANO, ex: JAN/2024
-- ElectricalEnergyQuantity: quantidade de Energia Elétrica em kWh
-- ElectricalEnergyValue: valor em R$ da Energia Elétrica (positivo)
-- SCEEEEnergyWithoutICMSQuantity: quantidade de Energia SCEE s/ ICMS em kWh
-- SCEEEEnergyWithoutICMSValue: valor em R$ da Energia SCEE s/ ICMS
-- GDICompensatedEnergyQuantity: quantidade de Energia Compensada GD I em kWh
-- GDICompensatedEnergyValue: valor em R$ da Energia Compensada GD I
-- ContribMunicipalPublicLightValue: valor em R$ da Contrib Ilum Pública Municipal
-
-Para campos numéricos não encontrados, use 0 como valor padrão.
-`;
-	}
-
 	async get({ pdf }: PDFDataProps): Promise<PDFDataResponseProps> {
-		const pdfInText = await this.convertPdfToString(pdf);
-
-		this.validateIfInvoice(pdfInText);
+		if (!pdf?.buffer) {
+			throw new BadRequestError('Arquivo PDF inválido.');
+		}
 
 		let responseText: string | undefined;
 
 		try {
 			const response = await this.client.models.generateContent({
 				model: 'gemini-3-flash-preview',
-				contents: this.buildPrompt(pdfInText),
+				contents: [
+					{
+						parts: [
+							{
+								inlineData: {
+									mimeType: 'application/pdf',
+									data: pdf.buffer.toString('base64'),
+								},
+							},
+							{ text: PROMPT },
+						],
+					},
+				],
 				config: {
 					responseMimeType: 'application/json',
 					responseSchema,
@@ -177,6 +139,12 @@ Para campos numéricos não encontrados, use 0 como valor padrão.
 		}
 
 		const { data } = parsed;
+
+		if (data.customerNumber === 'INVALID') {
+			throw new BadRequestError(
+				'O PDF enviado não parece ser uma fatura de energia elétrica válida.',
+			);
+		}
 
 		return {
 			customerNumber: data.customerNumber,
