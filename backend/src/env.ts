@@ -12,7 +12,8 @@ const envSchema = z
 			})
 			.default('development'),
 		WHITELIST_REQUESTS: z.string().optional(),
-		ANTHROPIC_KEY: z.string().min(1, { error: 'ANTHROPIC_KEY é requerida' }),
+		ANTHROPIC_KEY: z.string().optional(),
+		GEMINI_KEY: z.string().optional(),
 		DATABASE_URL: z.string().min(1, { error: 'DATABASE_URL é requerido' }),
 	})
 	.superRefine((data, ctx) => {
@@ -21,6 +22,14 @@ const envSchema = z
 				code: 'custom',
 				path: ['WHITELIST_REQUESTS'],
 				message: 'WHITELIST_REQUESTS é obrigatório em produção',
+			});
+		}
+
+		if (!data.ANTHROPIC_KEY && !data.GEMINI_KEY) {
+			ctx.addIssue({
+				code: 'custom',
+				path: ['ANTHROPIC_KEY'],
+				message: 'Pelo menos uma chave de API deve ser fornecida: ANTHROPIC_KEY ou GEMINI_KEY',
 			});
 		}
 	});

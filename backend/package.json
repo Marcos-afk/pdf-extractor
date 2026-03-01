@@ -11,7 +11,7 @@
 		"lint": "npx @biomejs/biome format --write ./src",
 		"dev": "nest start --watch",
 		"debug": "nest start --debug --watch",
-		"prod": "node dist/main",
+		"prod": "node dist/src/main.js",
 		"test": "jest",
 		"test:watch": "jest --watch",
 		"test:cov": "jest --coverage",
@@ -25,6 +25,7 @@
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.78.0",
+		"@google/genai": "^1.43.0",
 		"@nestjs/common": "^11.0.1",
 		"@nestjs/config": "^4.0.3",
 		"@nestjs/core": "^11.0.1",
