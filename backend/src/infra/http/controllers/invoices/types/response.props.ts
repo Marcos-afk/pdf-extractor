@@ -119,7 +119,6 @@ export class GetInvoicesResponse {
 	@ApiProperty({
 		description: 'Lista de faturas',
 		type: [InvoiceResponse],
-		isArray: true,
 	})
 	readonly data: InvoiceResponse[];
 
