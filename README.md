@@ -116,7 +116,7 @@ model Invoice {
 
 ### Documentação interativa
 
-Disponível em `https://pdf-extractor-c2io.onrender.com/api-docs` (Swagger UI) com todos os endpoints documentados, schemas de request/response e suporte a `Bearer Auth`.
+Disponível em [https://pdf-extractor-c2io.onrender.com/api-docs]("https://pdf-extractor-c2io.onrender.com/api-docs") (Swagger UI) com todos os endpoints documentados, schemas de request/response e suporte a `Bearer Auth`.
 
 ## Extração de PDF
 
@@ -231,6 +231,59 @@ npm run dev
 ```bash
 npm run build
 npm run prod
+```
+
+### Docker
+
+O projeto inclui um `Dockerfile` multi-stage otimizado (builder + production).
+
+**1. Build da imagem**
+
+```bash
+cd backend
+docker build -t pdf-extractor .
+```
+
+**2. Rodar o container**
+
+```bash
+docker run -d \
+  --name pdf-extractor \
+  -p 5000:5000 \
+  -e NODE_ENV=production \
+  -e PORT=5000 \
+  -e DATABASE_URL="postgresql://user:password@host:5432/dbname" \
+  -e GEMINI_KEY="your-gemini-key" \
+  -e WHITELIST_REQUESTS="https://seu-frontend.com" \
+  pdf-extractor
+```
+
+> Substitua os valores das variáveis conforme seu ambiente. `WHITELIST_REQUESTS` é obrigatório em produção.
+
+**3. Aplicar migrations no container**
+
+As migrations devem ser aplicadas manualmente antes (ou após) subir o container:
+
+```bash
+docker exec pdf-extractor yarn db:deploy
+```
+
+**Usando um arquivo `.env`**
+
+Alternativamente, passe as variáveis via arquivo:
+
+```bash
+docker run -d \
+  --name pdf-extractor \
+  -p 5000:5000 \
+  --env-file backend/.env \
+  pdf-extractor
+```
+
+**Verificar logs**
+
+```bash
+docker logs -f pdf-extractor
 ```
 
 ## Scripts
