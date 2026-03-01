@@ -116,7 +116,7 @@ model Invoice {
 
 ### Documentação interativa
 
-Disponível em `/api-docs` (Swagger UI) com todos os endpoints documentados, schemas de request/response e suporte a `Bearer Auth`.
+Disponível em `https://pdf-extractor-c2io.onrender.com/api-docs` (Swagger UI) com todos os endpoints documentados, schemas de request/response e suporte a `Bearer Auth`.
 
 ## Extração de PDF
 
